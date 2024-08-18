@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "430372482537",
+    "project_id": "s2connect",
+    "storage_bucket": "s2connect.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:430372482537:android:93f556a4a639d94ef16f78",
+        "android_client_info": {
+          "package_name": "com.shinCoDoMo.projects.s2connect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCauCvVZV9zsr7TGswngawdMTpicx03tTM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
