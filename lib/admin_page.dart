@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 
 class AdminPage extends StatefulWidget {
+  const AdminPage({super.key});
+
   @override
   _AdminPageState createState() => _AdminPageState();
 }
@@ -50,7 +52,7 @@ class _AdminPageState extends State<AdminPage> {
           'allergens': selectedAllergens,
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('商品が正常に追加されました')),
+          const SnackBar(content: Text('商品が正常に追加されました')),
         );
         _fetchProducts();
       } catch (e) {
@@ -60,7 +62,7 @@ class _AdminPageState extends State<AdminPage> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('すべてのフィールドに入力してください')),
+        const SnackBar(content: Text('すべてのフィールドに入力してください')),
       );
     }
   }
@@ -69,7 +71,7 @@ class _AdminPageState extends State<AdminPage> {
     try {
       await _firestore.collection('products').doc(productId).delete();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('商品が正常に削除されました')),
+        const SnackBar(content: Text('商品が正常に削除されました')),
       );
       _fetchProducts();
     } catch (e) {
@@ -83,8 +85,8 @@ class _AdminPageState extends State<AdminPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.0),
           child: Text('アレルギー情報', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
         ...allergens.map((allergen) {
@@ -97,11 +99,11 @@ class _AdminPageState extends State<AdminPage> {
               });
             },
           );
-        }).toList(),
+        }),
         Center(
           child: ElevatedButton(
             onPressed: _addProduct,
-            child: Text('商品を追加'),
+            child: const Text('商品を追加'),
           ),
         ),
       ],
@@ -112,13 +114,13 @@ class _AdminPageState extends State<AdminPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('商品登録ページ'),
+        title: const Text('商品登録ページ'),
         actions: [
           Row(
             children: [
-              Text('戻る'),
+              const Text('戻る'),
               IconButton(
-                icon: Icon(Icons.logout),
+                icon: const Icon(Icons.logout),
                 onPressed: () async {
                   await _auth.signOut();
                   GoRouter.of(context).go('/');
@@ -138,41 +140,41 @@ class _AdminPageState extends State<AdminPage> {
                 children: [
                   TextField(
                     controller: _nameController,
-                    decoration: InputDecoration(labelText: '商品名'),
+                    decoration: const InputDecoration(labelText: '商品名'),
                   ),
                   TextField(
                     controller: _priceController,
-                    decoration: InputDecoration(labelText: '価格'),
+                    decoration: const InputDecoration(labelText: '価格'),
                     keyboardType: TextInputType.number,
                   ),
                   TextField(
                     controller: _descriptionController,
-                    decoration: InputDecoration(labelText: '説明'),
+                    decoration: const InputDecoration(labelText: '説明'),
                   ),
                   TextField(
                     controller: _imageUrlController,
-                    decoration: InputDecoration(labelText: '商品画像URL'),
+                    decoration: const InputDecoration(labelText: '商品画像URL'),
                   ),
                   Center(
                     child: ElevatedButton(
                       onPressed: _addProduct,
-                      child: Text('商品を追加'),
+                      child: const Text('商品を追加'),
                     ),
                   ),
                   buildAllergenCheckboxes(),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
+          const Padding(
+            padding: EdgeInsets.all(8.0),
             child: Text(
               '現在登録されている商品',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
-          Container(
+          SizedBox(
             height: 300, // 商品リストのための適切な高さを設定
             child: _buildProductList(),
           ),
@@ -200,12 +202,12 @@ class _AdminPageState extends State<AdminPage> {
           key: ValueKey(productId),
           leading: ReorderableDragStartListener(
             index: _products.indexOf(product),
-            child: Icon(Icons.drag_handle),
+            child: const Icon(Icons.drag_handle),
           ),
           title: Text(productData['name']),
           subtitle: Text('価格: ¥${productData['price']}'),
           trailing: IconButton(
-            icon: Icon(Icons.delete),
+            icon: const Icon(Icons.delete),
             onPressed: () => _deleteProduct(productId),
           ),
         );

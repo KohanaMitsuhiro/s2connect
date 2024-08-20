@@ -4,13 +4,15 @@ import 'package:go_router/go_router.dart';
 import 'cart_model.dart';
 
 class CartPage extends StatelessWidget {
+  const CartPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('カート'),
+        title: const Text('カート'),
         leading: IconButton(  // leadingプロパティを使用して戻るアイコンを設定
-          icon: Icon(Icons.arrow_back), // 戻るアイコンを設定
+          icon: const Icon(Icons.arrow_back), // 戻るアイコンを設定
           onPressed: () {
             GoRouter.of(context).go('/products');
           },
@@ -29,7 +31,7 @@ class CartPage extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: Icon(Icons.remove),
+                      icon: const Icon(Icons.remove),
                       onPressed: () {
                         if (item.quantity > 1) {
                           cart.updateQuantity(item.productId, item.quantity - 1);
@@ -37,13 +39,13 @@ class CartPage extends StatelessWidget {
                       },
                     ),
                     IconButton(
-                      icon: Icon(Icons.add),
+                      icon: const Icon(Icons.add),
                       onPressed: () {
                         cart.updateQuantity(item.productId, item.quantity + 1);
                       },
                     ),
                     IconButton(
-                      icon: Icon(Icons.delete),
+                      icon: const Icon(Icons.delete),
                       onPressed: () {
                         cart.removeItem(item.productId);
                       },
