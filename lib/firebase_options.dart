@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -28,15 +25,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -49,20 +40,49 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyAXAwDJG_Hb9TkeBGh6MH2zc2g3gom413A',
+    appId: '1:459998986468:web:9f8d70c1e0221bcbb6acf1',
+    messagingSenderId: '459998986468',
+    projectId: 's2test-7adb2',
+    authDomain: 's2test-7adb2.firebaseapp.com',
+    storageBucket: 's2test-7adb2.appspot.com',
+    measurementId: 'G-5RGZE6EEX9',
+  );
+
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCauCvVZV9zsr7TGswngawdMTpicx03tTM',
-    appId: '1:430372482537:android:93f556a4a639d94ef16f78',
-    messagingSenderId: '430372482537',
-    projectId: 's2connect',
-    storageBucket: 's2connect.appspot.com',
+    apiKey: 'AIzaSyB9oYW_z_It-Z_5hapUPZLSCCTZB8C_P_0',
+    appId: '1:459998986468:android:1c2d6a4c6cb546f7b6acf1',
+    messagingSenderId: '459998986468',
+    projectId: 's2test-7adb2',
+    storageBucket: 's2test-7adb2.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDnok4cunZLZa5bP50UQGNCQOraTnGVoVU',
-    appId: '1:430372482537:ios:b9e17a3781eace56f16f78',
-    messagingSenderId: '430372482537',
-    projectId: 's2connect',
-    storageBucket: 's2connect.appspot.com',
-    iosBundleId: 'com.shinCoDoMo.projects.s2connect',
+    apiKey: 'AIzaSyDJ8tFyYG5wupBhFV9Pc1xU-fu4aGCE-uo',
+    appId: '1:459998986468:ios:f0398e67a8de2badb6acf1',
+    messagingSenderId: '459998986468',
+    projectId: 's2test-7adb2',
+    storageBucket: 's2test-7adb2.appspot.com',
+    iosBundleId: 'com.example.flutterApplication2',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyDJ8tFyYG5wupBhFV9Pc1xU-fu4aGCE-uo',
+    appId: '1:459998986468:ios:f0398e67a8de2badb6acf1',
+    messagingSenderId: '459998986468',
+    projectId: 's2test-7adb2',
+    storageBucket: 's2test-7adb2.appspot.com',
+    iosBundleId: 'com.example.flutterApplication2',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyAXAwDJG_Hb9TkeBGh6MH2zc2g3gom413A',
+    appId: '1:459998986468:web:3a2beb7369d49d18b6acf1',
+    messagingSenderId: '459998986468',
+    projectId: 's2test-7adb2',
+    authDomain: 's2test-7adb2.firebaseapp.com',
+    storageBucket: 's2test-7adb2.appspot.com',
+    measurementId: 'G-E9F51D4WR4',
   );
 }
