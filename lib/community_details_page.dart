@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io'; // 追加
+import 'dart:io';
 import 'package:provider/provider.dart';
-import 'models/community_model.dart'; // 追加
-import 'package:go_router/go_router.dart'; // 追加
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'models/community_model.dart';
+import 'package:go_router/go_router.dart';
 
 class CommunityDetailsPage extends StatefulWidget {
   const CommunityDetailsPage({super.key});
@@ -16,13 +18,43 @@ class _CommunityDetailsPageState extends State<CommunityDetailsPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
   XFile? _imageFile;
+  String? _communityId;
 
   @override
   void initState() {
     super.initState();
-    final community = Provider.of<CommunityModel>(context, listen: false);
-    _nameController.text = community.communityName;
-    _detailsController.text = community.communityDetails;
+    _fetchCommunityData();
+  }
+
+  Future<void> _fetchCommunityData() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      return;
+    }
+
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      _communityId = userDoc['communityId'];
+      if (_communityId == null) {
+        print('Error: communityId is null');
+        return;
+      }
+
+      final communityModel =
+          Provider.of<CommunityModel>(context, listen: false);
+      await communityModel.fetchCommunityDetails(_communityId!);
+
+      setState(() {
+        _nameController.text = communityModel.communityName;
+        _detailsController.text = communityModel.communityDetails;
+      });
+    } catch (e) {
+      print('Error fetching community details: $e');
+    }
   }
 
   Future<void> _pickImage() async {
@@ -44,7 +76,7 @@ class _CommunityDetailsPageState extends State<CommunityDetailsPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            context.pop(); // GoRouterのpopメソッドを使用
+            context.pop();
           },
         ),
       ),
@@ -99,13 +131,19 @@ class _CommunityDetailsPageState extends State<CommunityDetailsPage> {
                     backgroundColor: Colors.orange,
                   ),
                   onPressed: () {
-                    Provider.of<CommunityModel>(context, listen: false)
-                        .updateCommunity(
-                      _nameController.text,
-                      _detailsController.text,
-                      _imageFile?.path,
-                    );
-                    context.pop(); // GoRouterのpopメソッドを使用
+                    if (_communityId != null) {
+                      Provider.of<CommunityModel>(context, listen: false)
+                          .updateCommunity(
+                        _communityId!,
+                        _nameController.text,
+                        _detailsController.text,
+                        _imageFile?.path,
+                      );
+                      context.pop();
+                    } else {
+                      print(
+                          'Error: communityId is null, cannot update community');
+                    }
                   },
                   child: const Text('保存'),
                 ),

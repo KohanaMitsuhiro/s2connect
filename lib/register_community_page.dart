@@ -35,26 +35,33 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class RegisterCommunityPage extends StatelessWidget {
+class RegisterCommunityPage extends StatefulWidget {
   const RegisterCommunityPage({super.key});
 
   static const String reservationsRoute = '/reservations';
   static const String registerAccountRoute = '/registerAccount';
 
-  // ルーティングメソッド
+  @override
+  _RegisterCommunityPageState createState() => _RegisterCommunityPageState();
+}
+
+class _RegisterCommunityPageState extends State<RegisterCommunityPage> {
+  final TextEditingController _inviteCodeController = TextEditingController();
+
   void _register(BuildContext context) async {
     final profileData = Provider.of<ProfileData>(context, listen: false);
     final firebaseService = FirebaseService();
 
     print('名前: ${profileData.name}');
-    print('ニックネーム: ${profileData.nickName}'); // ニックネームを表示
+    print('ニックネーム: ${profileData.nickName}');
     print('メールアドレス: ${profileData.email}');
     print('パスワード: ${profileData.password}');
     print('生年月日: ${profileData.dateOfBirth}');
+    print('招待コード: ${_inviteCodeController.text}');
 
     try {
       if (profileData.name == null ||
-          profileData.nickName == null || // ニックネームの確認を追加
+          profileData.nickName == null ||
           profileData.email == null ||
           profileData.password == null ||
           profileData.dateOfBirth == null) {
@@ -62,19 +69,38 @@ class RegisterCommunityPage extends StatelessWidget {
         return;
       }
 
+      // コミュニティIDを決定
+      String communityId = 'community1'; // デフォルトのコミュニティID
+      if (_inviteCodeController.text.isNotEmpty) {
+        // 招待コードからコミュニティIDを取得
+        String? foundCommunityId = await firebaseService
+            .getCommunityIdByInviteCode(_inviteCodeController.text);
+
+        if (foundCommunityId == null) {
+          _showErrorDialog(context, '招待コードが無効です。');
+          return;
+        }
+
+        communityId = foundCommunityId; // 有効な招待コードがあればそのコミュニティIDを使用
+      }
+
       // FirebaseServiceを使ってFirebase AuthenticationとFirestoreへの書き込みを行う
       await firebaseService.createUserProfile(
         name: profileData.name!,
-        nickName: profileData.nickName!, // ニックネームを渡す
+        nickName: profileData.nickName!,
         email: profileData.email!,
         password: profileData.password!,
         dateOfBirth: profileData.dateOfBirth!,
-        communityId: null, // デフォルトでコミュニティIDをnullに設定
+        communityId: communityId, // コミュニティIDを渡す
         coupons: [], // クーポンリストは空リストで初期化
       );
 
+      // コミュニティのメンバー数を増やす
+      await firebaseService.updateCommunityMemberCount(communityId,
+          increment: 1);
+
       // 次の画面に遷移
-      GoRouter.of(context).go(reservationsRoute);
+      GoRouter.of(context).go(RegisterCommunityPage.reservationsRoute);
     } catch (e) {
       print('エラーが発生しました: $e');
       _showErrorDialog(context, 'ユーザー登録中にエラーが発生しました: ${e.toString()}');
@@ -82,7 +108,7 @@ class RegisterCommunityPage extends StatelessWidget {
   }
 
   void _goBack(BuildContext context) {
-    GoRouter.of(context).go(registerAccountRoute);
+    GoRouter.of(context).go(RegisterCommunityPage.registerAccountRoute);
   }
 
   void _showErrorDialog(BuildContext context, String message) {
@@ -124,10 +150,36 @@ class RegisterCommunityPage extends StatelessWidget {
           const ProfileRow(),
           Padding(
             padding: const EdgeInsets.only(top: 50.0, left: 20.0),
-            child: RegistrationForm(
-                titleStyle: titleStyle,
-                register: () => _register(context),
-                goBack: () => _goBack(context)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('コミュニティ', style: titleStyle),
+                const SizedBox(height: 16.0),
+                Text(
+                  '本アプリは旬をすぐにお得にご利用するため、ユーザー同士でコミュニティを形成して頂きます。'
+                  '\n\n招待コードをお持ちの場合はご入力お願い致します。入力無い場合は新規ユーザー用コミュニティに自動招待致します。',
+                  style: zenMaruGothicStyle.copyWith(fontSize: 14.0),
+                ),
+                const SizedBox(height: 32.0),
+                TextField(
+                  controller: _inviteCodeController,
+                  decoration: const InputDecoration(
+                    labelText: '招待コード',
+                    hintText: '※お持ちの場合のみ',
+                  ),
+                ),
+                const SizedBox(height: 120),
+                Row(
+                  children: [
+                    const Spacer(flex: 1),
+                    RegisterButton(
+                        register: () => _register(context),
+                        goBack: () => _goBack(context)),
+                    const Spacer(flex: 9),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -148,61 +200,10 @@ class ProfileRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           Expanded(child: ProfileColumn(title: 'プロフィール')),
+          Expanded(child: ProfileColumn(title: 'アカウント')),
           Expanded(
-              child: ProfileColumn(title: 'アカウント', color: profileColumnColor)),
-          Expanded(child: ProfileColumn(title: 'コミュニティ')),
-        ],
-      ),
-    );
-  }
-}
-
-// 登録フォームを表示するウィジェット
-class RegistrationForm extends StatelessWidget {
-  final TextStyle titleStyle;
-  final VoidCallback register;
-  final VoidCallback goBack;
-
-  const RegistrationForm({
-    super.key,
-    required this.titleStyle,
-    required this.register,
-    required this.goBack,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Transform.translate(
-      offset: const Offset(10, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: spaceSize),
-          Text('アカウント', style: titleStyle),
-          const SizedBox(height: 32),
-          Text(
-            '本アプリはユーザー同士でコミュニティを形成し、お得に商品をご利用いただくアプリです。',
-            style: zenMaruGothicStyle.copyWith(
-              fontSize: descriptionFontSize,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '初回利用時は新規登録者コミュニティに自動加入頂きます。',
-            style: zenMaruGothicStyle.copyWith(fontSize: descriptionFontSize),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'ご自身でコミュニティを作る場合、探す場合は、コミュニティ画面より所属変更を行ってください。',
-            style: zenMaruGothicStyle.copyWith(fontSize: descriptionFontSize),
-          ),
-          const SizedBox(height: 120),
-          Row(
-            children: [
-              const Spacer(flex: 1),
-              RegisterButton(register: register, goBack: goBack),
-              const Spacer(flex: 9),
-            ],
+            child: ProfileColumn(
+                title: 'コミュニティ', color: profileColumnColor), // コミュニティが赤になるように設定
           ),
         ],
       ),
@@ -284,7 +285,7 @@ class RegisterButton extends StatelessWidget {
               side: BorderSide.none,
             ),
             child: Text(
-              '登録する',
+              '次へ',
               style: zenMaruGothicStyle.copyWith(),
             ),
           ),

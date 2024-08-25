@@ -1,11 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'models/community_model.dart';
-import 'dart:io';
 import 'package:go_router/go_router.dart';
+import 'services/firebase_service.dart';
 
 class ReservationsPage extends StatelessWidget {
   const ReservationsPage({super.key});
+
+  Future<Map<String, String>> _fetchCommunityInfo() async {
+    final firebaseService = FirebaseService();
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (userId == null) {
+      return {'communityName': 'Unknown', 'communityDetails': 'Not available'};
+    }
+
+    // ユーザーのcommunityIdを取得
+    DocumentSnapshot userDoc = await firebaseService.getUserById(userId);
+    String? communityId = userDoc['communityId'];
+
+    if (communityId == null) {
+      return {'communityName': 'Unknown', 'communityDetails': 'Not available'};
+    }
+
+    // communityIdを元にコミュニティ情報を取得
+    DocumentSnapshot communityDoc =
+        await firebaseService.getCommunityById(communityId);
+
+    if (!communityDoc.exists) {
+      return {'communityName': 'Unknown', 'communityDetails': 'Not available'};
+    }
+
+    return {
+      'communityName': communityDoc['communityName'],
+      'communityDetails': communityDoc['communityDetails'], // 修正済み
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,37 +52,83 @@ class ReservationsPage extends StatelessWidget {
           },
         ),
       ),
-      body: Column(
-        children: [
-          Container(
-            color: Colors.grey[800],
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildTopNavButton(
-                    context, Icons.restaurant_menu, '予約状況', '/reservations'),
-                _buildTopNavButton(context, Icons.list, '掲示板', '/bulletin'),
-                _buildTopNavButton(context, Icons.mail, '招待', '/invites'),
-                _buildTopNavButton(
-                    context, Icons.change_circle, '所属変更', '/change'),
-              ],
+      body: DefaultTabController(
+        length: 3, // Tabの数を設定
+        child: Column(
+          children: [
+            // トップバーの情報を追加
+            Container(
+              color: Colors.grey[800],
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildTopNavButton(
+                      context, Icons.restaurant_menu, '予約状況', '/reservations'),
+                  _buildTopNavButton(context, Icons.list, '掲示板', '/bulletin'),
+                  _buildTopNavButton(context, Icons.mail, '招待', '/invites'),
+                  _buildTopNavButton(
+                      context, Icons.change_circle, '所属変更', '/change'),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16.0),
-              physics: const ClampingScrollPhysics(),
-              children: [
-                _buildCommunityCard(context),
-                const SizedBox(height: 16),
-                _buildOrderSummary(context),
-              ],
+            FutureBuilder<Map<String, String>>(
+              future: _fetchCommunityInfo(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return const Center(child: Text('エラーが発生しました'));
+                } else {
+                  final communityName =
+                      snapshot.data?['communityName'] ?? 'Unknown';
+                  final communityDetails =
+                      snapshot.data?['communityDetails'] ?? 'Not available';
+
+                  return Expanded(
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: _buildCommunityCard(
+                              context, communityName, ''), // コミュニティ詳細を非表示
+                        ),
+                        TabBar(
+                          labelColor: Colors.orange,
+                          unselectedLabelColor: Colors.grey,
+                          indicatorColor: Colors.orange,
+                          tabs: const [
+                            Tab(text: "すべて"),
+                            Tab(text: "個別配送"),
+                            Tab(text: "一括配送"),
+                          ],
+                        ),
+                        Expanded(
+                          child: TabBarView(
+                            children: [
+                              _buildOrderSummary(context),
+                              _buildOrderSummary(context), // 個別配送用の内容
+                              _buildOrderSummary(context), // 一括配送用の内容
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            communityDetails.replaceAll(r'\n', '\n'), // 改行の処理
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              },
             ),
-          ),
-          _buildBottomNavigation(context),
-        ],
+          ],
+        ),
       ),
+      bottomNavigationBar: _buildBottomNavigation(context),
     );
   }
 
@@ -69,8 +147,8 @@ class ReservationsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCommunityCard(BuildContext context) {
-    final community = Provider.of<CommunityModel>(context);
+  Widget _buildCommunityCard(
+      BuildContext context, String communityName, String communityDetails) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -83,9 +161,7 @@ class ReservationsPage extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: community.imagePath == null
-                  ? Image.asset('assets/images/S2.png')
-                  : Image.file(File(community.imagePath!)),
+              child: Image.asset('assets/images/S2.png'),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -93,14 +169,12 @@ class ReservationsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    community.communityName,
+                    communityName,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(community.communityDetails),
                 ],
               ),
             ),
@@ -124,9 +198,15 @@ class ReservationsPage extends StatelessWidget {
   Widget _buildOrderSummary(BuildContext context) {
     return Column(
       children: [
-        _buildOrderCard(context, '7/17', 5, 22, 4, 5),
-        _buildOrderCard(context, '7/24', 2, 8, 1, 12),
-        _buildOrderCard(context, '7/31', 0, 0, 0, 19),
+        Expanded(
+          child: ListView(
+            children: [
+              _buildOrderCard(context, '7/17', 5, 22, 4, 5),
+              _buildOrderCard(context, '7/24', 2, 8, 1, 12),
+              _buildOrderCard(context, '7/31', 0, 0, 0, 19),
+            ],
+          ),
+        ),
       ],
     );
   }

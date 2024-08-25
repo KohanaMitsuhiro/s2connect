@@ -68,7 +68,8 @@ flutter:
   # アセット（画像など）の設定
   assets:
     - assets/images/S2.png
-
+    - assets/images/S3.png
+    - assets/images/kobato.png
   # 画像やフォントなど、他のアセットの追加のための設定例
   # これらのコメントはアセットを追加する際の参考として残されています。
   # 例:

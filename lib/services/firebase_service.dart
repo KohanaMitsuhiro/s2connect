@@ -7,12 +7,12 @@ class FirebaseService {
 
   Future<void> createUserProfile({
     required String name,
-    required String nickName, // ニックネームを追加
+    required String nickName,
     required String email,
     required String password,
     required DateTime dateOfBirth,
-    String? communityId, // オプションのコミュニティIDを追加
-    List<String>? coupons, // クーポンリストを追加
+    String? communityId,
+    List<String>? coupons,
   }) async {
     try {
       // Firebase Authenticationでユーザーを作成
@@ -26,15 +26,22 @@ class FirebaseService {
       if (user != null) {
         print('ユーザーID: ${user.uid}');
 
+        // コミュニティIDが指定されていない場合、デフォルトのコミュニティIDを使用
+        communityId ??= await _getDefaultCommunityId();
+
         // Firestoreにユーザープロフィールを保存
         await _firestore.collection('users').doc(user.uid).set({
           'name': name,
-          'nickName': nickName, // ニックネームを保存
+          'nickName': nickName,
           'email': email,
           'date_of_birth': dateOfBirth.toIso8601String(),
-          'communityId': communityId ?? null, // コミュニティIDを追加（デフォルトはnull）
-          'appliedCoupons': coupons ?? [], // クーポンリストを追加（デフォルトは空リスト）
+          'communityId': communityId,
+          'appliedCoupons': coupons ?? [],
         });
+
+        // コミュニティのメンバー数を更新
+        await _incrementCommunityMemberCount(communityId);
+
         print('Firestoreにユーザープロフィールが保存されました');
       } else {
         print('ユーザーがnullです');
@@ -45,15 +52,66 @@ class FirebaseService {
     }
   }
 
-  Future<void> updateUserCommunity(String userId, String communityId) async {
+  // 招待コードからコミュニティIDを取得
+  Future<String?> getCommunityIdByInviteCode(String inviteCode) async {
+    final snapshot = await _firestore
+        .collection('communities')
+        .where('inviteCode', isEqualTo: inviteCode)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      return snapshot.docs.first.id;
+    } else {
+      return null;
+    }
+  }
+
+  // コミュニティのメンバー数をインクリメントまたはデクリメント
+  Future<void> updateCommunityMemberCount(String communityId,
+      {required int increment}) async {
     try {
-      await _firestore.collection('users').doc(userId).update({
-        'communityId': communityId,
+      await _firestore.collection('communities').doc(communityId).update({
+        'memberCount': FieldValue.increment(increment),
       });
-      print('コミュニティ情報が更新されました');
+      print('コミュニティのメンバー数が更新されました');
     } catch (e) {
-      print('コミュニティ情報の更新中にエラーが発生しました: $e');
+      print('メンバー数の更新中にエラーが発生しました: $e');
       rethrow;
+    }
+  }
+
+  // コミュニティのメンバー数をインクリメント
+  Future<void> _incrementCommunityMemberCount(String communityId) async {
+    await updateCommunityMemberCount(communityId, increment: 1);
+  }
+
+  // コミュニティのメンバー数をデクリメント
+  Future<void> _decrementCommunityMemberCount(String communityId) async {
+    await updateCommunityMemberCount(communityId, increment: -1);
+  }
+
+  // ユーザーIDからユーザーデータを取得
+  Future<DocumentSnapshot> getUserById(String userId) async {
+    return await _firestore.collection('users').doc(userId).get();
+  }
+
+  // コミュニティIDからコミュニティデータを取得
+  Future<DocumentSnapshot> getCommunityById(String communityId) async {
+    return await _firestore.collection('communities').doc(communityId).get();
+  }
+
+  // デフォルトのコミュニティIDを取得
+  Future<String> _getDefaultCommunityId() async {
+    final snapshot = await _firestore
+        .collection('communities')
+        .where('isDefault', isEqualTo: true)
+        .limit(1)
+        .get();
+    if (snapshot.docs.isNotEmpty) {
+      return snapshot.docs.first.id;
+    } else {
+      throw Exception('デフォルトのコミュニティが見つかりません');
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'styles.dart';
 import 'constants.dart';
 
@@ -25,6 +26,26 @@ class WelcomePage extends StatelessWidget {
         email: _emailController.text,
         password: _passwordController.text,
       );
+    } on FirebaseAuthException catch (e) {
+      switch (e.code) {
+        case 'user-not-found':
+          errorMessage = 'このメールアドレスに対応するユーザーが見つかりません。';
+          break;
+        case 'wrong-password':
+          errorMessage = 'パスワードが間違っています。';
+          break;
+        case 'invalid-email':
+          errorMessage = 'メールアドレスの形式が正しくありません。';
+          break;
+        case 'user-disabled':
+          errorMessage = 'このユーザーアカウントは無効になっています。';
+          break;
+        case 'invalid-credential':
+          errorMessage = '提供された認証情報が無効です。';
+          break;
+        default:
+          errorMessage = '不明なエラーが発生しました: ${e.message}';
+      }
     } catch (e) {
       errorMessage = 'エラーが発生しました: ${e.toString()}';
     }
@@ -107,7 +128,7 @@ class WelcomePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/images/S2.png',
+                'assets/images/S3.png',
                 width: imageSize,
                 height: imageSize,
               ),
