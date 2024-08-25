@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'styles.dart';
 import 'constants.dart';
 import 'profile_data.dart';
+import 'services/firebase_service.dart';
 
 // 定数の定義
 const double paddingSize = 16.0;
@@ -18,7 +19,6 @@ const Color profileColumnColor = Color(0xFFF68655);
 
 void main() {
   runApp(
-    // ProfileDataをアプリ全体で利用可能にする
     ChangeNotifierProvider(
       create: (context) => ProfileData(),
       child: MyApp(),
@@ -35,7 +35,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// プロフィールデータを取得し、それを表示するウィジェット
 class RegisterCommunityPage extends StatelessWidget {
   const RegisterCommunityPage({super.key});
 
@@ -43,31 +42,76 @@ class RegisterCommunityPage extends StatelessWidget {
   static const String registerAccountRoute = '/registerAccount';
 
   // ルーティングメソッド
-  void _register(BuildContext context) {
-    GoRouter.of(context).go(reservationsRoute);
+  void _register(BuildContext context) async {
+    final profileData = Provider.of<ProfileData>(context, listen: false);
+    final firebaseService = FirebaseService();
+
+    print('名前: ${profileData.name}');
+    print('ニックネーム: ${profileData.nickName}'); // ニックネームを表示
+    print('メールアドレス: ${profileData.email}');
+    print('パスワード: ${profileData.password}');
+    print('生年月日: ${profileData.dateOfBirth}');
+
+    try {
+      if (profileData.name == null ||
+          profileData.nickName == null || // ニックネームの確認を追加
+          profileData.email == null ||
+          profileData.password == null ||
+          profileData.dateOfBirth == null) {
+        _showErrorDialog(context, 'すべての必須情報を入力してください。');
+        return;
+      }
+
+      // FirebaseServiceを使ってFirebase AuthenticationとFirestoreへの書き込みを行う
+      await firebaseService.createUserProfile(
+        name: profileData.name!,
+        nickName: profileData.nickName!, // ニックネームを渡す
+        email: profileData.email!,
+        password: profileData.password!,
+        dateOfBirth: profileData.dateOfBirth!,
+        communityId: null, // デフォルトでコミュニティIDをnullに設定
+        coupons: [], // クーポンリストは空リストで初期化
+      );
+
+      // 次の画面に遷移
+      GoRouter.of(context).go(reservationsRoute);
+    } catch (e) {
+      print('エラーが発生しました: $e');
+      _showErrorDialog(context, 'ユーザー登録中にエラーが発生しました: ${e.toString()}');
+    }
   }
 
   void _goBack(BuildContext context) {
     GoRouter.of(context).go(registerAccountRoute);
   }
 
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('エラー'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('閉じる'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // プロフィールデータの取得
-    final profileData = Provider.of<ProfileData>(context, listen: true);
     final titleStyle = zenMaruGothicStyle.copyWith(
         fontSize: titleFontSize,
         fontWeight: FontWeight.bold,
         color: blackColor);
 
-    // プロフィールデータの表示
-    print(profileData.name);
-    print(profileData.nickName);
-    print(profileData.email);
-    print(profileData.password);
-    print(profileData.dateOfBirth);
-
-    // レイアウトの構築
     return Scaffold(
       appBar: AppBar(
         title: Text('会員登録',
@@ -155,9 +199,9 @@ class RegistrationForm extends StatelessWidget {
           const SizedBox(height: 120),
           Row(
             children: [
-              const Spacer(flex: 1), // flexの値を調整してスペースの量を変更
+              const Spacer(flex: 1),
               RegisterButton(register: register, goBack: goBack),
-              const Spacer(flex: 9), // flexの値を調整してスペースの量を変更
+              const Spacer(flex: 9),
             ],
           ),
         ],
@@ -207,32 +251,8 @@ class RegisterButton extends StatelessWidget {
   const RegisterButton(
       {super.key, required this.register, required this.goBack});
 
-  // エラーダイアログを表示するメソッド
-  void _showErrorDialog(BuildContext context, dynamic e) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('エラー'),
-          content: Text('エラーが発生しました: ${e.toString()}'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // ダイアログを閉じる
-              },
-              child: const Text('閉じる'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final profileData = Provider.of<ProfileData>(context, listen: false);
-    final _auth = FirebaseAuth.instance;
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -256,18 +276,7 @@ class RegisterButton extends StatelessWidget {
         SizedBox(
           width: 130,
           child: ElevatedButton(
-            onPressed: () async {
-              try {
-                await _auth.createUserWithEmailAndPassword(
-                  email: profileData.email!,
-                  password: profileData.password!,
-                );
-                register();
-              } catch (e) {
-                print(e);
-                _showErrorDialog(context, e);
-              }
-            },
+            onPressed: register,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFC913A),
               foregroundColor: whiteColor,

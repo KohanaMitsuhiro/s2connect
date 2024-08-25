@@ -1,18 +1,19 @@
 import 'package:flutter/foundation.dart';
+import 'package:s2connect/services/firebase_service.dart';
 
 // カート内の各アイテムを表すモデルクラス
 class CartItem {
   final String productId;
   final String name;
   final int price;
-  final String imageUrl; // imageUrl プロパティを追加
+  final String imageUrl;
   int quantity;
 
   CartItem({
     required this.productId,
     required this.name,
     required this.price,
-    required this.imageUrl, // コンストラクタに imageUrl を追加
+    required this.imageUrl,
     this.quantity = 1,
   });
 }
@@ -64,4 +65,37 @@ class CartModel extends ChangeNotifier {
   // カート内のアイテムの合計金額を取得するゲッター
   int get totalPrice => _items.fold(
       0, (total, current) => total + (current.quantity * current.price));
+
+  // クーポンの適用
+  Future<void> applyCoupon(String couponId, String userId) async {
+    FirebaseService firebaseService = FirebaseService();
+    var coupon = await firebaseService.getCoupon(couponId);
+
+    if (coupon.exists) {
+      double discountRate = coupon['discount_rate'];
+      bool isDynamic = coupon['is_dynamic'];
+
+      if (isDynamic) {
+        String eventId = coupon['event_id'];
+        int participants = await firebaseService.getEventParticipants(eventId);
+        discountRate = firebaseService.calculateDynamicDiscountRate(
+            participants, coupon['shipping_cost']);
+      }
+
+      // ユーザーの注文に割引を適用する処理を追加
+      await firebaseService.applyDiscountToUserOrder(userId, discountRate);
+
+      // クーポンの適用をユーザーに反映
+      await firebaseService.applyCoupon(couponId, userId);
+
+      notifyListeners();
+    }
+  }
+
+  // クーポンのキャンセル
+  Future<void> cancelCoupon(String couponId, String userId) async {
+    FirebaseService firebaseService = FirebaseService();
+    await firebaseService.removeCoupon(couponId, userId);
+    notifyListeners();
+  }
 }

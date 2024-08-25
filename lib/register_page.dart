@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'profile_data.dart'; // プロフィールデータを取得
+import 'services/firebase_service.dart'; // FirebaseServiceをインポート
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -23,10 +26,25 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     try {
-      await _auth.createUserWithEmailAndPassword(
+      // Firebase Authにユーザーを作成
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
         email: _registerEmailController.text,
         password: _registerPasswordController.text,
       );
+
+      // Firestoreに追加情報を保存
+      FirebaseService firebaseService = FirebaseService();
+      await firebaseService.createUserProfile(
+        name: Provider.of<ProfileData>(context, listen: false).name!,
+        nickName: Provider.of<ProfileData>(context, listen: false)
+            .nickName!, // ここでニックネームを追加
+        email: _registerEmailController.text,
+        password: _registerPasswordController.text,
+        dateOfBirth:
+            Provider.of<ProfileData>(context, listen: false).dateOfBirth!,
+      );
+
       _showRegistrationDialog();
     } catch (e) {
       print(e); // Error handling

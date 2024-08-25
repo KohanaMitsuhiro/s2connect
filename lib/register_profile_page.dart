@@ -5,19 +5,27 @@ import 'styles.dart';
 import 'profile_data.dart';
 
 class RegisterProfilePage extends StatelessWidget {
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
 
   RegisterProfilePage({super.key});
 
-  void _register(BuildContext context) {
-    if (_emailController.text.isEmpty) {
+  void _proceedToAccountPage(BuildContext context) {
+    if (_nameController.text.isEmpty) {
       _showDialog(context, 'エラー', '名前を入力してください。');
       return;
     }
 
-    Provider.of<ProfileData>(context, listen: false)
-        .updateName(_emailController.text);
+    // 生年月日が設定されているか確認
+    if (Provider.of<ProfileData>(context, listen: false).dateOfBirth == null) {
+      _showDialog(context, 'エラー', '生年月日を選択してください。');
+      return;
+    }
 
+    // 名前をProfileDataに保存
+    Provider.of<ProfileData>(context, listen: false)
+        .updateName(_nameController.text);
+
+    // アカウントページに遷移
     GoRouter.of(context).go('/registerAccount');
   }
 
@@ -59,9 +67,9 @@ class RegisterProfilePage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 50.0, left: 20.0),
             child: RegistrationForm(
-                emailController: _emailController,
+                nameController: _nameController,
                 titleStyle: titleStyle,
-                register: () => _register(context)),
+                proceed: () => _proceedToAccountPage(context)),
           ),
         ],
       ),
@@ -91,15 +99,15 @@ class ProfileRow extends StatelessWidget {
 }
 
 class RegistrationForm extends StatelessWidget {
-  final TextEditingController emailController;
+  final TextEditingController nameController;
   final TextStyle titleStyle;
-  final VoidCallback register;
+  final VoidCallback proceed;
 
   const RegistrationForm({
     super.key,
-    required this.emailController,
+    required this.nameController,
     required this.titleStyle,
-    required this.register,
+    required this.proceed,
   });
 
   @override
@@ -113,7 +121,7 @@ class RegistrationForm extends StatelessWidget {
           Text('プロフィール', style: titleStyle),
           const SizedBox(height: 16.0),
           CustomTextField(
-              controller: emailController, labelText: 'Name', hintText: '横山 彩'),
+              controller: nameController, labelText: 'Name', hintText: '横山 彩'),
           CustomDateOfBirthPicker(
             onDateSelected: (selectedDate) {
               Provider.of<ProfileData>(context, listen: false)
@@ -124,7 +132,7 @@ class RegistrationForm extends StatelessWidget {
           Row(
             children: [
               const Spacer(flex: 6),
-              RegisterButton(register: register),
+              RegisterButton(proceed: proceed),
               const Spacer(flex: 1),
             ],
           ),
@@ -195,16 +203,16 @@ class ProfileColumn extends StatelessWidget {
 }
 
 class RegisterButton extends StatelessWidget {
-  final VoidCallback register;
+  final VoidCallback proceed;
 
-  const RegisterButton({super.key, required this.register});
+  const RegisterButton({super.key, required this.proceed});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 130,
       child: ElevatedButton(
-        onPressed: register,
+        onPressed: proceed,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFFC913A),
           foregroundColor: Colors.white,
