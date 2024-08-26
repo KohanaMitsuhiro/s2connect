@@ -12,7 +12,8 @@ publish_to: 'none'
 # 詳細は以下のリンクを参照してください。
 # Android: https://developer.android.com/studio/publish/versioning
 # iOS: https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.0.0+1
+# version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: '>=3.4.3 <4.0.0'
