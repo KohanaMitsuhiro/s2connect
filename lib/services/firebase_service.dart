@@ -169,6 +169,37 @@ class FirebaseService {
     await _firestore.collection('community_events').add(eventData);
   }
 
+  // 新しいイベントをFireStoreに保存する関数
+  Future<void> saveEvent({
+    required String eventId,
+    required String eventName,
+    required String communityId,
+    required DateTime eventDate,
+    required String location,
+    required bool isBulk,
+    required int participantCount,
+    required double shippingCost,
+    required DateTime orderDeadline, // 注文締切日
+  }) async {
+    try {
+      await _firestore.collection('events').doc(eventId).set({
+        'eventId': eventId,
+        'eventName': eventName,
+        'communityId': communityId,
+        'eventDate': eventDate.toIso8601String(),
+        'location': location,
+        'isBulk': isBulk,
+        'participantCount': participantCount,
+        'shippingCost': shippingCost,
+        'orderDeadline': orderDeadline.toIso8601String(), // 注文締切日を保存
+      });
+      print('イベントが保存されました');
+    } catch (e) {
+      print('イベントの保存中にエラーが発生しました: $e');
+      rethrow;
+    }
+  }
+
   double calculateDynamicDiscountRate(int participants, double shippingCost) {
     double baseDiscountRate = 0;
 

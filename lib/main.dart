@@ -19,6 +19,7 @@ import 'filtered_products_page.dart'; // 新しいフィルタ済み商品ペー
 import 'models/community_model.dart';
 import 'community_details_page.dart'; // 追加
 import 'cart_overview_page.dart'; // 新しいカート概要ページをインポート
+import 'services/firebase_service.dart'; // FirebaseServiceをインポート
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -90,6 +91,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CartModel()),
         ChangeNotifierProvider(create: (_) => CommunityModel()),
         ChangeNotifierProvider(create: (_) => ProfileData()),
+        Provider<FirebaseService>(
+            create: (_) => FirebaseService()), // FirebaseServiceを追加
       ],
       child: MaterialApp.router(
         routerConfig: router,

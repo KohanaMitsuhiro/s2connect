@@ -6,6 +6,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'models/community_model.dart';
 import 'package:go_router/go_router.dart';
+import 'services/firebase_service.dart';
+import 'package:intl/intl.dart'; // この行を追加
 
 class CommunityDetailsPage extends StatefulWidget {
   const CommunityDetailsPage({super.key});
@@ -65,6 +67,149 @@ class _CommunityDetailsPageState extends State<CommunityDetailsPage> {
         _imageFile = image;
       });
     }
+  }
+
+  void _showEventCreationForm(BuildContext context) {
+    final TextEditingController eventNameController = TextEditingController();
+    final TextEditingController locationController = TextEditingController();
+    DateTime? eventDate;
+    DateTime? orderDeadline;
+    DateTime? shippingDate; // 配送日用変数
+    bool isBulk = false;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('イベント生成'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: eventNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'イベント名',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: locationController,
+                      decoration: const InputDecoration(
+                        labelText: '配送場所',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      title: const Text('開催日を選択'),
+                      subtitle: Text(eventDate == null
+                          ? '未選択'
+                          : DateFormat('yyyy-MM-dd').format(eventDate!)),
+                      onTap: () async {
+                        final pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2100),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            eventDate = pickedDate;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      title: const Text('注文締切日を選択'),
+                      subtitle: Text(orderDeadline == null
+                          ? '未選択'
+                          : DateFormat('yyyy-MM-dd').format(orderDeadline!)),
+                      onTap: () async {
+                        final pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2100),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            orderDeadline = pickedDate;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      title: const Text('配送日を選択'),
+                      subtitle: Text(shippingDate == null
+                          ? '未選択'
+                          : DateFormat('yyyy-MM-dd').format(shippingDate!)),
+                      onTap: () async {
+                        final pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2100),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            shippingDate = pickedDate;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      title: const Text("一括配送"),
+                      value: isBulk,
+                      onChanged: (bool value) {
+                        setState(() {
+                          isBulk = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('キャンセル'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (_communityId != null) {
+                      await Provider.of<FirebaseService>(context, listen: false)
+                          .createCommunityEvent({
+                        'eventName': eventNameController.text,
+                        'communityId': _communityId,
+                        'eventDate': eventDate?.toIso8601String(),
+                        'location': locationController.text,
+                        'isBulk': isBulk,
+                        'participantCount': 0,
+                        'shippingCost': 950, // 送料の初期値
+                        'orderDeadline': orderDeadline?.toIso8601String(),
+                        'shippingDate': shippingDate?.toIso8601String(), // 配送日
+                      });
+
+                      Navigator.of(context).pop(); // フォームを閉じる
+                    } else {
+                      print('Error: communityId is null, cannot create event');
+                    }
+                  },
+                  child: const Text('生成'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -146,6 +291,13 @@ class _CommunityDetailsPageState extends State<CommunityDetailsPage> {
                     }
                   },
                   child: const Text('保存'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () => _showEventCreationForm(context),
+                  child: const Text('イベント生成'),
                 ),
               ),
             ],
