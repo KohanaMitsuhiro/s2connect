@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class OrderPage extends StatefulWidget {
-  final String date;
+  final DateTime date;
 
   const OrderPage({super.key, required this.date});
 
@@ -33,7 +33,7 @@ class _OrderPageState extends State<OrderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.date} 商品選択'),
+        title: Text('${widget.date.toLocal().toString().split(' ')[0]} 商品選択'),
       ),
       body: Column(
         children: [
@@ -91,7 +91,8 @@ class _OrderPageState extends State<OrderPage> {
                     GoRouter.of(context).push(
                       '/filtered_products',
                       extra: {
-                        'date': widget.date,
+                        'date': widget.date
+                            .toIso8601String(), // DateTimeをStringに変換して渡す
                         'allergens': selectedAllergens,
                       },
                     );

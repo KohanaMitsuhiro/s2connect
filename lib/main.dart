@@ -63,7 +63,8 @@ class MyApp extends StatelessWidget {
             builder: (context, state) => const ReservationsPage()),
         GoRoute(
           path: '/order',
-          builder: (context, state) => OrderPage(date: state.extra as String),
+          builder: (context, state) =>
+              OrderPage(date: state.extra as DateTime), // 修正箇所
         ),
         GoRoute(
           path: '/filtered_products',
