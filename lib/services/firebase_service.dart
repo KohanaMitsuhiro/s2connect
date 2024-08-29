@@ -165,8 +165,34 @@ class FirebaseService {
     return await _firestore.collection('community_events').doc(eventId).get();
   }
 
-  Future<void> createCommunityEvent(Map<String, dynamic> eventData) async {
-    await _firestore.collection('community_events').add(eventData);
+  Future<String> createCommunityEvent(Map<String, dynamic> eventData) async {
+    DocumentReference docRef =
+        await _firestore.collection('community_events').add(eventData);
+    return docRef.id; // 作成されたドキュメントのIDを返す
+  }
+
+  // クーポンを作成するメソッドを追加
+  Future<void> createEventCoupon(Map<String, dynamic> couponData) async {
+    await _firestore.collection('coupons').add(couponData);
+  }
+
+  // イベントの参加人数をインクリメントするメソッド
+  Future<void> incrementParticipantCount(String eventId) async {
+    try {
+      DocumentReference eventRef =
+          _firestore.collection('community_events').doc(eventId);
+      await _firestore.runTransaction((transaction) async {
+        DocumentSnapshot snapshot = await transaction.get(eventRef);
+        if (!snapshot.exists) {
+          throw Exception("Event does not exist!");
+        }
+        int newCount = (snapshot['participantCount'] ?? 0) + 1;
+        transaction.update(eventRef, {'participantCount': newCount});
+      });
+    } catch (e) {
+      print('Error incrementing participant count: $e');
+      rethrow;
+    }
   }
 
   // コミュニティのすべてのイベントを取得

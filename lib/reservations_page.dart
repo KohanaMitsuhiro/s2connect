@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'services/firebase_service.dart';
 import 'package:intl/intl.dart';
+import 'widgets/navigation.dart';
 
 class ReservationsPage extends StatelessWidget {
   const ReservationsPage({super.key});
@@ -17,7 +18,6 @@ class ReservationsPage extends StatelessWidget {
       return {'communityName': 'Unknown', 'communityDetails': 'Not available'};
     }
 
-    // ユーザーのcommunityIdを取得
     DocumentSnapshot userDoc = await firebaseService.getUserById(userId);
     String? communityId = userDoc['communityId'];
 
@@ -25,7 +25,6 @@ class ReservationsPage extends StatelessWidget {
       return {'communityName': 'Unknown', 'communityDetails': 'Not available'};
     }
 
-    // communityIdを元にコミュニティ情報を取得
     DocumentSnapshot communityDoc =
         await firebaseService.getCommunityById(communityId);
 
@@ -105,9 +104,9 @@ class ReservationsPage extends StatelessWidget {
                         Expanded(
                           child: TabBarView(
                             children: [
-                              _buildEventList(context, null),
-                              _buildEventList(context, false),
-                              _buildEventList(context, true),
+                              _buildScrollableEventList(context, null),
+                              _buildScrollableEventList(context, false),
+                              _buildScrollableEventList(context, true),
                             ],
                           ),
                         ),
@@ -127,7 +126,7 @@ class ReservationsPage extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigation(context),
+      bottomNavigationBar: buildBottomNavigation(context),
     );
   }
 
@@ -194,7 +193,7 @@ class ReservationsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildEventList(BuildContext context, bool? isBulk) {
+  Widget _buildScrollableEventList(BuildContext context, bool? isBulk) {
     final firebaseService = FirebaseService();
     final userId = FirebaseAuth.instance.currentUser?.uid;
 
@@ -237,13 +236,19 @@ class ReservationsPage extends StatelessWidget {
 
             return ListView(
               children: documents.map((doc) {
+                final int participantCount = doc['participantCount'] ?? 0;
+                final int shippingCost = participantCount > 0
+                    ? (950 / participantCount).round()
+                    : 950; // 参加人数が0またはnullの場合はデフォルトの950円を設定
+
                 return _buildOrderCard(
                   context,
                   _parseTimestamp(doc['eventDate']),
-                  doc['participantCount'] ?? 0,
+                  participantCount,
                   doc['location'] ?? '',
-                  doc['shippingCost'] ?? 0,
+                  shippingCost,
                   _parseTimestamp(doc['orderDeadline']),
+                  doc.id, // イベントIDを渡す
                 );
               }).toList(),
             );
@@ -253,8 +258,15 @@ class ReservationsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildOrderCard(BuildContext context, DateTime eventDate, int people,
-      String location, int shippingCost, DateTime orderDeadline) {
+  Widget _buildOrderCard(
+    BuildContext context,
+    DateTime eventDate,
+    int people,
+    String location,
+    int shippingCost,
+    DateTime orderDeadline,
+    String eventId, // イベントIDを追加
+  ) {
     return Card(
       color: Colors.orange,
       shape: RoundedRectangleBorder(
@@ -262,7 +274,10 @@ class ReservationsPage extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          GoRouter.of(context).push('/order', extra: eventDate);
+          GoRouter.of(context).push('/order', extra: {
+            'eventDate': eventDate,
+            'eventId': eventId,
+          });
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
@@ -326,53 +341,9 @@ class ReservationsPage extends StatelessWidget {
     if (timestamp is Timestamp) {
       return timestamp.toDate();
     } else if (timestamp is String) {
-      // 文字列の場合はISO 8601形式の日付文字列を解析
       return DateTime.parse(timestamp);
     } else {
       throw ArgumentError('Unsupported timestamp format: $timestamp');
     }
-  }
-
-  Widget _buildBottomNavigation(BuildContext context) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.orange,
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.white,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person, size: 30.0),
-          label: 'マイページ',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.group, size: 30.0),
-          label: 'コミュニティ',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.info, size: 30.0),
-          label: 'お役立ち情報',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.message, size: 30.0),
-          label: 'メッセージ',
-        ),
-      ],
-      onTap: (index) {
-        switch (index) {
-          case 0:
-            GoRouter.of(context).push('/mypage');
-            break;
-          case 1:
-            GoRouter.of(context).push('/community');
-            break;
-          case 2:
-            GoRouter.of(context).push('/info');
-            break;
-          case 3:
-            GoRouter.of(context).push('/messages');
-            break;
-        }
-      },
-    );
   }
 }

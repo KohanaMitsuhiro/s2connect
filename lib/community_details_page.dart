@@ -7,7 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'models/community_model.dart';
 import 'package:go_router/go_router.dart';
 import 'services/firebase_service.dart';
-import 'package:intl/intl.dart'; // この行を追加
+import 'package:intl/intl.dart';
 
 class CommunityDetailsPage extends StatefulWidget {
   const CommunityDetailsPage({super.key});
@@ -74,8 +74,9 @@ class _CommunityDetailsPageState extends State<CommunityDetailsPage> {
     final TextEditingController locationController = TextEditingController();
     DateTime? eventDate;
     DateTime? orderDeadline;
-    DateTime? shippingDate; // 配送日用変数
+    DateTime? shippingDate;
     bool isBulk = false;
+    int shippingCost = 950; // 初期の送料設定
 
     showDialog(
       context: context,
@@ -184,7 +185,10 @@ class _CommunityDetailsPageState extends State<CommunityDetailsPage> {
                 ElevatedButton(
                   onPressed: () async {
                     if (_communityId != null) {
-                      await Provider.of<FirebaseService>(context, listen: false)
+                      // イベントを生成
+                      final eventId = await Provider.of<FirebaseService>(
+                              context,
+                              listen: false)
                           .createCommunityEvent({
                         'eventName': eventNameController.text,
                         'communityId': _communityId,
@@ -192,9 +196,23 @@ class _CommunityDetailsPageState extends State<CommunityDetailsPage> {
                         'location': locationController.text,
                         'isBulk': isBulk,
                         'participantCount': 0,
-                        'shippingCost': 950, // 送料の初期値
+                        'shippingCost': shippingCost, // 送料を初期設定
                         'orderDeadline': orderDeadline?.toIso8601String(),
-                        'shippingDate': shippingDate?.toIso8601String(), // 配送日
+                        'shippingDate': shippingDate?.toIso8601String(),
+                      });
+
+                      // クーポンを自動生成
+                      await Provider.of<FirebaseService>(context, listen: false)
+                          .createEventCoupon({
+                        'coupon_id': 'C-$eventId',
+                        'coupon_name': 'Event Discount',
+                        'created_at': Timestamp.now(),
+                        'discount_rate': 0,
+                        'event_id': eventId,
+                        'expires_at': orderDeadline, // 締切日まで有効
+                        'is_dynamic': true,
+                        'shipping_cost': shippingCost, // 初期設定の送料を使用
+                        'total_issued': 1, // 初期発行は1枚（イベント参加者によって増加）
                       });
 
                       Navigator.of(context).pop(); // フォームを閉じる

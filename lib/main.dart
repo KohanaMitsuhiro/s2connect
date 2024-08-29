@@ -15,11 +15,12 @@ import 'cart_page.dart';
 import 'cart_model.dart';
 import 'reservations_page.dart';
 import 'order_page.dart';
-import 'filtered_products_page.dart'; // 新しいフィルタ済み商品ページをインポート
+import 'filtered_products_page.dart';
 import 'models/community_model.dart';
-import 'community_details_page.dart'; // 追加
-import 'cart_overview_page.dart'; // 新しいカート概要ページをインポート
-import 'services/firebase_service.dart'; // FirebaseServiceをインポート
+import 'community_details_page.dart';
+import 'cart_overview_page.dart';
+import 'services/firebase_service.dart';
+import 'mypage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,8 +64,24 @@ class MyApp extends StatelessWidget {
             builder: (context, state) => const ReservationsPage()),
         GoRoute(
           path: '/order',
-          builder: (context, state) =>
-              OrderPage(date: state.extra as DateTime), // 修正箇所
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+
+            if (extra != null) {
+              final parsedDate =
+                  DateTime.tryParse(extra['date']?.toString() ?? '');
+              final eventId = extra['eventId'] as String?;
+              if (parsedDate != null && eventId != null) {
+                return OrderPage(date: parsedDate, eventId: eventId);
+              } else {
+                return OrderPage(
+                    date: DateTime.now(),
+                    eventId: eventId ?? ''); // デフォルト日付と空のイベントID
+              }
+            } else {
+              throw ArgumentError('Invalid extra data passed to OrderPage');
+            }
+          },
         ),
         GoRoute(
           path: '/filtered_products',
@@ -74,16 +91,28 @@ class MyApp extends StatelessWidget {
             return FilteredProductsPage(
               date: extra['date'] as String,
               allergens: extra['allergens'] as List<String>,
+              eventId: extra['eventId'] as String, // eventIdを追加
             );
           },
-        ), // 新しいルートを追加
+        ),
         GoRoute(
             path: '/community_details',
             builder: (context, state) => const CommunityDetailsPage()),
         GoRoute(
             path: '/cart_overview',
-            builder: (context, state) =>
-                const CartOverviewPage()), // カート概要ページのルートを追加
+            builder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>?;
+
+              if (extra != null && extra.containsKey('eventId')) {
+                final eventId = extra['eventId'] as String;
+                return CartOverviewPage(eventId: eventId);
+              } else {
+                return const CartOverviewPage(eventId: '');
+              }
+            }),
+        GoRoute(
+            path: '/mypage',
+            builder: (context, state) => const MyPage()), // マイページのルートを追加
       ],
     );
 

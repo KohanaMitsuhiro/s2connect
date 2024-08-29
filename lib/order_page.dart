@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'widgets/navigation.dart'; // 共通ナビゲーションのインポート
 
 class OrderPage extends StatefulWidget {
   final DateTime date;
+  final String eventId; // イベントIDを追加
 
-  const OrderPage({super.key, required this.date});
+  const OrderPage(
+      {super.key, required this.date, required this.eventId}); // eventIdを追加
 
   @override
   _OrderPageState createState() => _OrderPageState();
@@ -91,16 +94,16 @@ class _OrderPageState extends State<OrderPage> {
                     GoRouter.of(context).push(
                       '/filtered_products',
                       extra: {
-                        'date': widget.date
-                            .toIso8601String(), // DateTimeをStringに変換して渡す
+                        'date': widget.date.toIso8601String(),
                         'allergens': selectedAllergens,
+                        'eventId': widget.eventId, // イベントIDも一緒に渡す
                       },
                     );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
-                    disabledBackgroundColor: Colors.white, // テキストの色を白に
-                    fixedSize: const Size(140, 40), // ボタンのサイズを調整
+                    disabledBackgroundColor: Colors.white,
+                    fixedSize: const Size(140, 40),
                   ),
                   child: const Text('フィルター'),
                 ),
@@ -109,46 +112,7 @@ class _OrderPageState extends State<OrderPage> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.orange,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person, size: 30.0),
-            label: 'マイページ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.group, size: 30.0),
-            label: 'コミュニティ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.info, size: 30.0),
-            label: 'お役立ち情報',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.message, size: 30.0),
-            label: 'メッセージ',
-          ),
-        ],
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              GoRouter.of(context).push('/mypage');
-              break;
-            case 1:
-              GoRouter.of(context).push('/community');
-              break;
-            case 2:
-              GoRouter.of(context).push('/info');
-              break;
-            case 3:
-              GoRouter.of(context).push('/messages');
-              break;
-          }
-        },
-      ),
+      bottomNavigationBar: buildBottomNavigation(context), // ここで使用
     );
   }
 
