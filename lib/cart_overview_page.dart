@@ -5,7 +5,6 @@ import 'widgets/navigation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'services/firebase_service.dart';
-import 'package:go_router/go_router.dart';
 
 class CartOverviewPage extends StatelessWidget {
   final String eventId;
@@ -182,27 +181,32 @@ class CartOverviewPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: ElevatedButton(
                       onPressed: () async {
-                        final firebaseService = FirebaseService();
                         final userId = FirebaseAuth.instance.currentUser?.uid;
 
                         if (userId != null) {
-                          await firebaseService
-                              .incrementParticipantCount(eventId);
+                          // incrementParticipantCountを呼び出して、クーポンIDを取得
+                          String? couponId = await firebaseService
+                              .incrementParticipantCount(eventId, userId);
 
-                          final updatedEvent =
-                              await firebaseService.getCommunityEvent(eventId);
-                          final updatedParticipants =
-                              updatedEvent['participantCount'] ?? 1;
-                          final updatedShippingCost = 950 / updatedParticipants;
+                          // 取得したクーポンIDを使って、ユーザーにクーポンを追加
+                          if (couponId != null) {
+                            await firebaseService.addCouponToUser(
+                                userId, couponId);
 
-                          await firebaseService.addCouponToUser(
-                              userId, eventId);
+                            // 送料を再計算して表示
+                            final updatedEvent = await firebaseService
+                                .getCommunityEvent(eventId);
+                            final updatedParticipants =
+                                updatedEvent['participantCount'] ?? 1;
+                            final updatedShippingCost =
+                                (shippingCost / updatedParticipants).round();
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text(
-                                    '送料は ¥${updatedShippingCost.round()} です')),
-                          );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content:
+                                      Text('送料は ¥$updatedShippingCost です')),
+                            );
+                          }
 
                           // 予約を確定する処理を追加
                         }

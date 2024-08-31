@@ -185,7 +185,7 @@ class _CommunityDetailsPageState extends State<CommunityDetailsPage> {
                 ElevatedButton(
                   onPressed: () async {
                     if (_communityId != null) {
-                      // イベントを生成
+                      // イベントを生成（クーポンも同時に生成される）
                       final eventId = await Provider.of<FirebaseService>(
                               context,
                               listen: false)
@@ -199,20 +199,6 @@ class _CommunityDetailsPageState extends State<CommunityDetailsPage> {
                         'shippingCost': shippingCost, // 送料を初期設定
                         'orderDeadline': orderDeadline?.toIso8601String(),
                         'shippingDate': shippingDate?.toIso8601String(),
-                      });
-
-                      // クーポンを自動生成
-                      await Provider.of<FirebaseService>(context, listen: false)
-                          .createEventCoupon({
-                        'coupon_id': 'C-$eventId',
-                        'coupon_name': 'Event Discount',
-                        'created_at': Timestamp.now(),
-                        'discount_rate': 0,
-                        'event_id': eventId,
-                        'expires_at': orderDeadline, // 締切日まで有効
-                        'is_dynamic': true,
-                        'shipping_cost': shippingCost, // 初期設定の送料を使用
-                        'total_issued': 1, // 初期発行は1枚（イベント参加者によって増加）
                       });
 
                       Navigator.of(context).pop(); // フォームを閉じる

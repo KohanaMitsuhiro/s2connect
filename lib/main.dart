@@ -112,7 +112,7 @@ class MyApp extends StatelessWidget {
             }),
         GoRoute(
             path: '/mypage',
-            builder: (context, state) => const MyPage()), // マイページのルートを追加
+            builder: (context, state) => MyPage()), // マイページのルートを追加
       ],
     );
 
