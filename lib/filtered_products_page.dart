@@ -3,13 +3,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'cart_model.dart'; // カートモデルをインポート
 import 'package:go_router/go_router.dart';
+import 'widgets/navigation.dart'; // 共通ナビゲーションのインポート
 
 class FilteredProductsPage extends StatelessWidget {
   final String date;
   final List<String> allergens;
+  final String eventId; // eventIdを追加
 
   const FilteredProductsPage(
-      {super.key, required this.date, required this.allergens});
+      {super.key,
+      required this.date,
+      required this.allergens,
+      required this.eventId}); // eventIdを必須に
 
   Future<List<Map<String, dynamic>>> _fetchFilteredProducts() async {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -96,8 +101,10 @@ class FilteredProductsPage extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: ElevatedButton(
           onPressed: () {
-            // カートの中を見るページに遷移
-            GoRouter.of(context).push('/cart_overview');
+            // カートの中を見るページに遷移する際にeventIdを渡す
+            GoRouter.of(context).push('/cart_overview', extra: {
+              'eventId': eventId, // eventIdを渡す
+            });
           },
           child: const Text('カートの中を見る'),
         ),

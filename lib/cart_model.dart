@@ -86,7 +86,7 @@ class CartModel extends ChangeNotifier {
       await firebaseService.applyDiscountToUserOrder(userId, discountRate);
 
       // クーポンの適用をユーザーに反映
-      await firebaseService.applyCoupon(couponId, userId);
+      await firebaseService.addCouponToUser(couponId, userId);
 
       notifyListeners();
     }
@@ -95,7 +95,7 @@ class CartModel extends ChangeNotifier {
   // クーポンのキャンセル
   Future<void> cancelCoupon(String couponId, String userId) async {
     FirebaseService firebaseService = FirebaseService();
-    await firebaseService.removeCoupon(couponId, userId);
+    await firebaseService.removeCouponFromUser(couponId, userId);
     notifyListeners();
   }
 }
