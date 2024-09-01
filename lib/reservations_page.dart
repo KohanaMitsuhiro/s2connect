@@ -42,7 +42,7 @@ class ReservationsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.orange,
+        backgroundColor: const Color(0xFFF6B352),
         title: const Text('予約状況'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -92,9 +92,9 @@ class ReservationsPage extends StatelessWidget {
                               _buildCommunityCard(context, communityName, ''),
                         ),
                         TabBar(
-                          labelColor: Colors.orange,
+                          labelColor: const Color(0xFFF6B352),
                           unselectedLabelColor: Colors.grey,
-                          indicatorColor: Colors.orange,
+                          indicatorColor: const Color(0xFFF6B352),
                           tabs: const [
                             Tab(text: "すべて"),
                             Tab(text: "個別配送"),
@@ -181,7 +181,7 @@ class ReservationsPage extends StatelessWidget {
                 GoRouter.of(context).push('/community_details');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
+                backgroundColor: const Color(0xFFF6B352),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
@@ -268,7 +268,7 @@ class ReservationsPage extends StatelessWidget {
     String eventId, // イベントIDを追加
   ) {
     return Card(
-      color: Colors.orange,
+      color: const Color(0xFFF6B352),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8.0),
       ),
@@ -325,7 +325,8 @@ class ReservationsPage extends StatelessWidget {
               Column(
                 children: [
                   Text('締切: ${DateFormat('MM/dd').format(orderDeadline)}',
-                      style: const TextStyle(color: Colors.red, fontSize: 12)),
+                      style:
+                          const TextStyle(color: Colors.black, fontSize: 12)),
                   const Icon(Icons.shopping_cart,
                       color: Colors.white, size: 20.0),
                 ],

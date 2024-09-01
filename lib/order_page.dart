@@ -83,7 +83,7 @@ class _OrderPageState extends State<OrderPage> {
                 ElevatedButton(
                   onPressed: _clearAllergens,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color(0xFFF6B352),
                     disabledBackgroundColor: Colors.white, // テキストの色を白に
                     fixedSize: const Size(140, 40), // ボタンのサイズを調整
                   ),
@@ -101,7 +101,7 @@ class _OrderPageState extends State<OrderPage> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color(0xFFF6B352),
                     disabledBackgroundColor: Colors.white,
                     fixedSize: const Size(140, 40),
                   ),
@@ -124,7 +124,7 @@ class _OrderPageState extends State<OrderPage> {
         width: 90, // ボタンの幅を少し小さく調整
         height: 50, // ボタンの高さを少し小さく調整
         decoration: BoxDecoration(
-          color: isSelected ? Colors.orange : Colors.white,
+          color: isSelected ? const Color(0xFFF6B352) : Colors.white,
           borderRadius: BorderRadius.circular(8.0),
           border: Border.all(color: Colors.grey),
         ),

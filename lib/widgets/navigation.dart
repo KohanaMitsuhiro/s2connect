@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 Widget buildBottomNavigation(BuildContext context) {
   return BottomNavigationBar(
     type: BottomNavigationBarType.fixed,
-    backgroundColor: Colors.orange,
+    backgroundColor: const Color(0xFFF6B352),
     selectedItemColor: Colors.white,
     unselectedItemColor: Colors.white,
     items: const [
