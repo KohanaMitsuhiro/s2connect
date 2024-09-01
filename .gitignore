@@ -41,3 +41,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+bcprov-jdk18on-1.78.1.jar
+encryption_public_key.pem
+key.properties
+my-release-key.jks
+pepk.jar
+pubspec.lock
+
+*.zip
