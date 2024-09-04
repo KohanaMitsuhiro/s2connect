@@ -63,8 +63,7 @@ class WelcomePage extends StatelessWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(title, style: zenMaruGothicStyle),
-          content:
-              Text(content ?? '', style: zenMaruGothicStyle), // nullの場合は空文字列を使用
+          content: Text(content ?? '', style: zenMaruGothicStyle), // nullの場合は空文字列を使用
           actions: [
             TextButton(
               onPressed: () {
@@ -127,16 +126,28 @@ class WelcomePage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/images/S3.png',
-                width: imageSize,
-                height: imageSize,
-              ),
-              const SizedBox(height: 0),
-              Text(
-                'connect',
-                style: zenMaruGothicStyle.copyWith(
-                    fontSize: titleFontSize, fontWeight: FontWeight.bold),
+              // Rowウィジェットで画像とテキストを横並びにし、Paddingで調整
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end, // 底辺を揃える
+                children: [
+                  // ロゴ画像
+                  Image.asset(
+                    'assets/images/S3.png',
+                    width: imageSize * 1.5, // 画像を少し大きくする
+                    height: imageSize * 1.5,
+                  ),
+                  const SizedBox(width: 8), // 画像とテキストの間のスペース
+                  // "connect" テキストをPaddingで少し下に移動
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 38), // 微調整するためのpadding
+                    child: Text(
+                      'connect',
+                      style: zenMaruGothicStyle.copyWith(
+                          fontSize: titleFontSize, fontWeight: FontWeight.bold,),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: spaceSize),
               Text(

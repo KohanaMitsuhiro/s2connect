@@ -234,23 +234,27 @@ class ReservationsPage extends StatelessWidget {
               return const Center(child: Text('現在、表示できるイベントはありません。'));
             }
 
-            return ListView(
-              children: documents.map((doc) {
-                final int participantCount = doc['participantCount'] ?? 0;
-                final int shippingCost = participantCount > 0
-                    ? (950 / participantCount).round()
-                    : 950; // 参加人数が0またはnullの場合はデフォルトの950円を設定
+            return Expanded(
+              child: ListView.builder(
+                itemCount: documents.length,
+                itemBuilder: (context, index) {
+                  final doc = documents[index];
+                  final int participantCount = doc['participantCount'] ?? 0;
+                  final int shippingCost = participantCount > 0
+                      ? (950 / participantCount).round()
+                      : 950; // 参加人数が0またはnullの場合はデフォルトの950円を設定
 
-                return _buildOrderCard(
-                  context,
-                  _parseTimestamp(doc['eventDate']),
-                  participantCount,
-                  doc['location'] ?? '',
-                  shippingCost,
-                  _parseTimestamp(doc['orderDeadline']),
-                  doc.id, // イベントIDを渡す
-                );
-              }).toList(),
+                  return _buildOrderCard(
+                    context,
+                    _parseTimestamp(doc['eventDate']),
+                    participantCount,
+                    doc['location'] ?? '',
+                    shippingCost,
+                    _parseTimestamp(doc['orderDeadline']),
+                    doc.id, // イベントIDを渡す
+                  );
+                },
+              ),
             );
           },
         );
@@ -290,24 +294,24 @@ class ReservationsPage extends StatelessWidget {
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
-                          fontSize: 12)),
+                          fontSize: 15)),
                   Text(DateFormat('MM/dd').format(eventDate),
                       style:
-                          const TextStyle(color: Colors.white, fontSize: 12)),
+                          const TextStyle(color: Colors.white, fontSize: 15)),
                 ],
               ),
               Column(
                 children: [
-                  const Icon(Icons.person, color: Colors.white, size: 20.0),
+                  const Icon(Icons.person, color: Colors.white, size: 23.0),
                   Text('$people',
                       style:
-                          const TextStyle(color: Colors.white, fontSize: 12)),
+                          const TextStyle(color: Colors.white, fontSize: 15)),
                 ],
               ),
               Column(
                 children: [
                   const Icon(Icons.location_on,
-                      color: Colors.white, size: 20.0),
+                      color: Colors.white, size: 23.0),
                   Text(location,
                       style:
                           const TextStyle(color: Colors.white, fontSize: 12)),
@@ -319,16 +323,20 @@ class ReservationsPage extends StatelessWidget {
                       style: TextStyle(color: Colors.white, fontSize: 20)),
                   Text('$shippingCost円',
                       style:
-                          const TextStyle(color: Colors.white, fontSize: 12)),
+                          const TextStyle(color: Colors.white, fontSize: 15)),
                 ],
               ),
               Column(
                 children: [
                   Text('締切: ${DateFormat('MM/dd').format(orderDeadline)}',
+<<<<<<< HEAD
                       style:
                           const TextStyle(color: Colors.black, fontSize: 12)),
+=======
+                      style: const TextStyle(color: Colors.black, fontSize: 15)),
+>>>>>>> feature/forPresentasion
                   const Icon(Icons.shopping_cart,
-                      color: Colors.white, size: 20.0),
+                      color: Colors.white, size: 23.0),
                 ],
               ),
             ],

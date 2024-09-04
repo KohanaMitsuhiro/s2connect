@@ -222,10 +222,8 @@ class FirebaseService {
           _firestore.collection('community_events').doc(eventId);
       DocumentReference userRef = _firestore.collection('users').doc(userId);
 
-      // トランザクション内で参加者数とクーポンを更新
       String? couponId;
       await _firestore.runTransaction((transaction) async {
-        // すべての読み取りを最初に行う
         DocumentSnapshot eventSnapshot = await transaction.get(eventRef);
         DocumentSnapshot userSnapshot = await transaction.get(userRef);
 
@@ -239,11 +237,10 @@ class FirebaseService {
         if (couponId != null) {
           List<dynamic> appliedCoupons = userSnapshot['appliedCoupons'] ?? [];
 
-          // 既にクーポンが適用されていないか確認
           if (!appliedCoupons.contains(couponId)) {
-            // すべての書き込みを読み取りの後に行う
             transaction.update(eventRef, {
               'participantCount': currentCount + 1,
+              'participantIds': FieldValue.arrayUnion([userId]),
             });
             transaction.update(userRef, {
               'appliedCoupons': FieldValue.arrayUnion([couponId]),
@@ -308,7 +305,12 @@ class FirebaseService {
         .where('communityId', isEqualTo: communityId)
         .snapshots();
   }
-
+  Stream<DocumentSnapshot> getCommunityEventStream(String eventId) {
+    return FirebaseFirestore.instance
+        .collection('communityEvents')
+        .doc(eventId)
+        .snapshots();
+  }
   // イベントタイプ別にコミュニティイベントを取得するメソッド
   Stream<QuerySnapshot> getCommunityEventsByType(
       String communityId, bool isBulk) {
@@ -388,7 +390,7 @@ class FirebaseService {
   Stream<QuerySnapshot> getUserEvents(String userId) {
     return _firestore
         .collection('community_events')
-        .where('participants', arrayContains: userId)
+        .where('participantIds', arrayContains: userId)
         .snapshots();
   }
 
