@@ -329,12 +329,7 @@ class ReservationsPage extends StatelessWidget {
               Column(
                 children: [
                   Text('締切: ${DateFormat('MM/dd').format(orderDeadline)}',
-<<<<<<< HEAD
-                      style:
-                          const TextStyle(color: Colors.black, fontSize: 12)),
-=======
                       style: const TextStyle(color: Colors.black, fontSize: 15)),
->>>>>>> feature/forPresentasion
                   const Icon(Icons.shopping_cart,
                       color: Colors.white, size: 23.0),
                 ],
