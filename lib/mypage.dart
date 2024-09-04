@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart' as intl; // intlパッケージをインポート
 import 'services/firebase_service.dart';
 import 'widgets/navigation.dart';
 
@@ -116,9 +117,6 @@ class MyPage extends StatelessWidget {
 
         List<dynamic> appliedCoupons = snapshot.data!['appliedCoupons'] ?? [];
 
-        // Debug: Log the appliedCoupons to check if they're retrieved correctly
-        print('appliedCoupons: $appliedCoupons');
-
         if (appliedCoupons.isEmpty) {
           return const Center(child: Text('現在、参加中のイベントはありません'));
         }
@@ -182,9 +180,7 @@ class MyPage extends StatelessWidget {
   Future<List<DocumentSnapshot>> _getEventsForCoupons(
       List<dynamic> couponIds) async {
     List<DocumentSnapshot> events = [];
-
     for (String couponId in couponIds) {
-      // ドキュメントIDでクーポンを取得する
       QuerySnapshot couponSnapshot = await FirebaseFirestore.instance
           .collection('coupons')
           .where('coupon_id', isEqualTo: couponId)
@@ -193,27 +189,15 @@ class MyPage extends StatelessWidget {
 
       if (couponSnapshot.docs.isNotEmpty) {
         DocumentSnapshot couponDoc = couponSnapshot.docs.first;
+        String eventId = couponDoc['event_id'];
+        DocumentSnapshot eventDoc = await FirebaseFirestore.instance
+            .collection('community_events')
+            .doc(eventId)
+            .get();
 
-        // Debug: Log coupon retrieval
-        print(
-            'Retrieved couponDoc for couponId $couponId: ${couponDoc.exists}');
-
-        if (couponDoc.exists) {
-          String eventId = couponDoc['event_id'];
-          DocumentSnapshot eventDoc = await FirebaseFirestore.instance
-              .collection('community_events')
-              .doc(eventId)
-              .get();
-
-          // Debug: Log event retrieval
-          print('Retrieved eventDoc for eventId $eventId: ${eventDoc.exists}');
-
-          if (eventDoc.exists) {
-            events.add(eventDoc);
-          }
+        if (eventDoc.exists) {
+          events.add(eventDoc);
         }
-      } else {
-        print('No coupon found with ID: $couponId');
       }
     }
 
@@ -248,9 +232,6 @@ class MyPage extends StatelessWidget {
 
         List<dynamic> appliedCoupons = snapshot.data!['appliedCoupons'] ?? [];
 
-        // Debug: Log the appliedCoupons to check if they're retrieved correctly
-        print('appliedCoupons: $appliedCoupons');
-
         if (appliedCoupons.isEmpty) {
           return const Center(child: Text('現在、保有しているクーポンはありません'));
         }
@@ -276,20 +257,59 @@ class MyPage extends StatelessWidget {
               itemCount: coupons.length,
               itemBuilder: (context, index) {
                 final coupon = coupons[index];
-                return Card(
-                  elevation: 5,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.0),
-                  ),
-                  child: ListTile(
-                    title: Text(coupon['coupon_name']),
-                    subtitle: Text('有効期限: ${coupon['expires_at']}'),
-                    trailing: Text(
-                      '割引率: ${coupon['discount_rate']}%',
-                      style: const TextStyle(
-                          color: Colors.green, fontWeight: FontWeight.bold),
-                    ),
-                  ),
+                final expiresAt = coupon['expires_at'] is Timestamp
+                    ? (coupon['expires_at'] as Timestamp).toDate()
+                    : DateTime.parse(coupon['expires_at']);
+                final formattedDate = intl.DateFormat('M/d').format(expiresAt);
+
+                // Firestoreからイベント参加人数を取得し、送料を計算
+                return FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('community_events')
+                      .doc(coupon['event_id'])
+                      .get(),
+                  builder: (context, eventSnapshot) {
+                    if (eventSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    }
+
+                    if (eventSnapshot.hasError ||
+                        !eventSnapshot.hasData ||
+                        !eventSnapshot.data!.exists) {
+                      return const Text('エラーが発生しました');
+                    }
+
+                    final eventData =
+                        eventSnapshot.data!.data() as Map<String, dynamic>;
+                    final int participantCount =
+                        eventData['participantCount'] ?? 1;
+                    final int shippingCost = (950 / participantCount).round();
+
+                    return Card(
+                      elevation: 5,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: ListTile(
+                        title: Text(coupon['coupon_name']),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('有効期限: $formattedDate'),
+                            Text(
+                              '送料: ¥$shippingCost',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color:Colors.green
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             );
@@ -302,7 +322,6 @@ class MyPage extends StatelessWidget {
   Future<List<DocumentSnapshot>> _getCouponsForUser(
       List<dynamic> couponIds) async {
     List<DocumentSnapshot> coupons = [];
-
     for (String couponId in couponIds) {
       try {
         QuerySnapshot couponSnapshot = await FirebaseFirestore.instance
@@ -313,16 +332,7 @@ class MyPage extends StatelessWidget {
 
         if (couponSnapshot.docs.isNotEmpty) {
           DocumentSnapshot couponDoc = couponSnapshot.docs.first;
-
-          // Debug: Log coupon retrieval
-          print(
-              'Retrieved couponDoc for couponId $couponId: ${couponDoc.exists}');
-
-          if (couponDoc.exists) {
-            coupons.add(couponDoc);
-          }
-        } else {
-          print('No coupon found with ID: $couponId');
+          coupons.add(couponDoc);
         }
       } catch (e) {
         print('Error retrieving coupon with ID $couponId: $e');
